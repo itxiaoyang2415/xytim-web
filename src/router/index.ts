@@ -148,6 +148,20 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         meta: { title: '修改生成配置', activeMenu: '/tool/gen', icon: '', noCache: true }
       }
     ]
+  },
+  {
+    path: '/im/wallet',
+    component: Layout,
+    hidden: true,
+    permissions: ['im:wallet:list'],
+    children: [
+      {
+        path: 'recharge-records',
+        component: () => import('@/views/im/wallet/rechargeRecords.vue'),
+        name: 'RechargeRecords',
+        meta: { title: '充值记录', activeMenu: '/im/wallet', icon: 'money' }
+      }
+    ]
   }
 ];
 

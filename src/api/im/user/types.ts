@@ -88,6 +88,16 @@ export interface UserVO {
    */
   status: number;
 
+  /**
+   * 钱包余额
+   */
+  walletBalance?: number;
+
+  /**
+   * 最后登录IP
+   */
+  lastLoginIp?: string;
+
 }
 
 export interface UserForm extends BaseEntity {

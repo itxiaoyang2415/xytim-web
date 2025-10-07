@@ -34,7 +34,7 @@ defineProps({
   }
 });
 
-const title = ref('盒子IM后台');
+const title = ref('心言IM');
 const settingsStore = useSettingsStore();
 const sideTheme = computed(() => settingsStore.sideTheme);
 </script>

@@ -45,6 +45,11 @@
             <dict-tag :options="sys_user_sex" :value="scope.row.sex" />
           </template>
         </el-table-column>
+        <el-table-column label="钱包余额" align="center" prop="walletBalance" width="120">
+          <template #default="scope">
+            <span class="balance-text">{{ scope.row.walletBalance || 0 }} USDT</span>
+          </template>
+        </el-table-column>
         <el-table-column label="标签" align="center">
           <template #default="scope">
             <el-tag v-if="scope.row.status == 1" class="tag" type="danger">已注销</el-tag>
@@ -62,7 +67,7 @@
             <span>{{ parseTime(scope.row.lastLoginTime, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="280">
           <template #default="scope">
             <el-button link type="primary" v-hasPermi="['im:user:query']"
               @click="handleDetail(scope.row)">详情</el-button>
@@ -70,6 +75,10 @@
               @click="unbanHandle(scope.row)">解封</el-button>
             <el-button v-else link type="danger" v-hasPermi="['im:user:ban']"
               @click="banHandle(scope.row)">封禁</el-button>
+            <el-button link type="success" icon="Wallet" v-hasPermi="['im:wallet:recharge']"
+              @click="handleRecharge(scope.row)">充值</el-button>
+            <el-button link type="warning" icon="List" v-hasPermi="['im:wallet:list']"
+              @click="handleViewRecords(scope.row)">记录</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -77,6 +86,20 @@
       <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize" @pagination="getList" />
     </el-card>
+
+    <!-- 充值弹窗 -->
+    <UserRechargeDialog 
+      v-model="rechargeDialogVisible"
+      :user-info="currentUser"
+      @success="handleRechargeSuccess"
+    />
+
+    <!-- 充值记录弹窗 -->
+    <UserRechargeRecordsDialog 
+      v-model="recordsDialogVisible"
+      :user-info="currentUser"
+    />
+
     <!-- 添加或修改用户对话框 -->
     <el-dialog :title="dialog.title" v-model="dialog.visible" width="800px" append-to-body>
       <el-form ref="userFormRef" :model="form" :rules="rules" label-width="100px" disabled>
@@ -131,6 +154,8 @@
 <script setup name="User" lang="ts">
 import { listUser, getUser, ban, unban } from '@/api/im/user';
 import { UserVO, UserQuery, UserForm } from '@/api/im/user/types';
+import UserRechargeDialog from './components/UserRechargeDialog.vue';
+import UserRechargeRecordsDialog from './components/UserRechargeRecordsDialog.vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -187,6 +212,16 @@ const { queryParams, form, rules } = toRefs(data);
 const { im_bool } = toRefs<any>(proxy?.useDict('im_bool'));
 const { im_user_status } = toRefs<any>(proxy?.useDict('im_user_status'));
 const { sys_user_sex } = toRefs<any>(proxy?.useDict('sys_user_sex'));
+
+// 充值相关
+const rechargeDialogVisible = ref(false);
+const recordsDialogVisible = ref(false);
+const currentUser = ref({
+  userId: 0,
+  userName: '',
+  nickName: '',
+  balance: 0
+});
 
 /** 查询用户列表 */
 const getList = async () => {
@@ -274,6 +309,36 @@ const handleExport = () => {
   }, `user_${new Date().getTime()}.xlsx`)
 }
 
+/** 打开充值弹窗 */
+const handleRecharge = (row: UserVO) => {
+  currentUser.value = {
+    userId: Number(row.id),
+    userName: row.userName || '',
+    nickName: row.nickName || '',
+    balance: row.walletBalance || 0
+  }
+  rechargeDialogVisible.value = true
+}
+
+/** 充值成功回调 */
+const handleRechargeSuccess = (result: any) => {
+  ElMessage.success(`充值成功！订单号：${result.orderNo}`)
+  // 刷新用户列表，获取最新的余额
+  getList()
+  // 可选：显示充值详情
+  console.log('充值结果：', result)
+}
+
+/** 查看用户充值记录 */
+const handleViewRecords = (row: UserVO) => {
+  currentUser.value = {
+    userId: Number(row.id),
+    userName: row.userName || '',
+    nickName: row.nickName || '',
+    balance: row.walletBalance || 0
+  }
+  recordsDialogVisible.value = true
+}
 
 onMounted(() => {
   getList();
@@ -281,4 +346,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.balance-text {
+  color: #67C23A;
+  font-weight: 500;
+}
 </style>
